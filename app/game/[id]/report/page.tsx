@@ -209,6 +209,8 @@ export default function ReportPage() {
     }, 'image/png')
   }
 
+  const [expandedRotation, setExpandedRotation] = useState<number | null>(null)
+
   if (!match) return <div className="p-8 text-center text-gray-400">Loading...</div>
 
   const playerStats = computePlayerStats(match)
@@ -289,34 +291,65 @@ export default function ReportPage() {
           </div>
         </div>
 
-        {/* Rotation stats */}
+        {/* Rotation stats — all rotations, expandable */}
         <div>
           <h2 className="text-xs font-semibold text-gray-400 uppercase mb-2">Rotation Performance</h2>
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-2">
             {rotationStats.map((r, i) => {
+              const isBest = i === 0
+              const isWorst = i === rotationStats.length - 1
               const rotatedLineup = [
                 ...match.startingLineup.slice(r.rotationIndex),
                 ...match.startingLineup.slice(0, r.rotationIndex),
               ]
               const server = rotatedLineup[0]
-              const isTop = i === 0
-              const isBottom = i === rotationStats.length - 1
+              const netStr = r.net > 0 ? `+${r.net}` : String(r.net)
+              const isExpanded = expandedRotation === r.rotationIndex
+              const courtGrid = [
+                [rotatedLineup[3], rotatedLineup[2], rotatedLineup[1]],
+                [rotatedLineup[4], rotatedLineup[5], rotatedLineup[0]],
+              ]
+              const bg = isBest ? 'bg-green-50' : isWorst ? 'bg-red-50' : 'bg-gray-50'
+              const badge = isBest ? '✅' : isWorst ? '⚠️' : null
+
               return (
-                <div
-                  key={r.rotationIndex}
-                  className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm ${
-                    isTop ? 'bg-green-50' : isBottom ? 'bg-red-50' : 'bg-gray-50'
-                  }`}
-                >
-                  <span className="text-gray-400 text-xs w-4">{r.rotationIndex + 1}</span>
-                  <span className="flex-1 text-gray-600 truncate text-xs">{server} serving</span>
-                  <span className="text-green-600 font-medium">+{r.ptsFor}</span>
-                  <span className="text-red-400 font-medium">-{r.ptsAgainst}</span>
-                  <span className={`font-bold w-8 text-right ${r.net >= 0 ? 'text-green-600' : 'text-red-500'}`}>
-                    {r.net > 0 ? `+${r.net}` : r.net}
-                  </span>
-                  {isTop && <span>✅</span>}
-                  {isBottom && r.net < 0 && <span>⚠️</span>}
+                <div key={r.rotationIndex} className={`rounded-xl overflow-hidden ${bg}`}>
+                  <button
+                    onClick={() => setExpandedRotation(isExpanded ? null : r.rotationIndex)}
+                    className="w-full flex items-center gap-2 px-4 py-3 text-sm"
+                  >
+                    {badge && <span className="text-sm">{badge}</span>}
+                    <span className="flex-1 text-gray-700 font-medium text-left truncate">{server} serving</span>
+                    <span className="text-green-600 font-medium">+{r.ptsFor}</span>
+                    <span className="text-red-400 font-medium">-{r.ptsAgainst}</span>
+                    <span className={`font-bold w-8 text-right ${r.net >= 0 ? 'text-green-600' : 'text-red-500'}`}>{netStr}</span>
+                    <span className="text-gray-400 text-xs ml-1">{isExpanded ? '▲' : '▼'}</span>
+                  </button>
+
+                  {isExpanded && (
+                    <div className="px-4 pb-4">
+                      <p className="text-xs text-gray-400 mb-2 text-center">← back court · front court →</p>
+                      <div className="border border-gray-200 rounded-xl overflow-hidden bg-white">
+                        {courtGrid.map((row, ri) => (
+                          <div key={ri} className={`flex ${ri === 0 ? 'border-b border-gray-200' : ''}`}>
+                            {row.map((name, ci) => (
+                              <div
+                                key={ci}
+                                className={`flex-1 py-4 text-center text-sm font-medium ${
+                                  ri === 1 && ci === 2
+                                    ? 'bg-green-100 text-green-700 font-bold'
+                                    : 'text-gray-700'
+                                } ${ci < row.length - 1 ? 'border-r border-gray-200' : ''}`}
+                              >
+                                {name}
+                              </div>
+                            ))}
+                          </div>
+                        ))}
+                      </div>
+                      <p className="text-xs text-green-600 text-center mt-2">🏐 {server} serving</p>
+                    </div>
+                  )}
                 </div>
               )
             })}
