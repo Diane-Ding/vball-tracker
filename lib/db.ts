@@ -1,20 +1,26 @@
 'use client'
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb'
-import type { Match, Player } from './types'
+import type { Match, Player, TeamPreset } from './types'
 
 interface VballDB extends DBSchema {
   matches: { key: string; value: Match }
   roster: { key: string; value: Player }
+  teams: { key: string; value: TeamPreset }
 }
 
 let db: IDBPDatabase<VballDB> | null = null
 
 async function getDB() {
   if (!db) {
-    db = await openDB<VballDB>('vball-tracker', 1, {
-      upgrade(database) {
-        database.createObjectStore('matches', { keyPath: 'id' })
-        database.createObjectStore('roster', { keyPath: 'id' })
+    db = await openDB<VballDB>('vball-tracker', 2, {
+      upgrade(database, oldVersion) {
+        if (oldVersion < 1) {
+          database.createObjectStore('matches', { keyPath: 'id' })
+          database.createObjectStore('roster', { keyPath: 'id' })
+        }
+        if (oldVersion < 2) {
+          database.createObjectStore('teams', { keyPath: 'id' })
+        }
       },
     })
   }
@@ -55,4 +61,19 @@ export async function savePlayer(player: Player) {
 export async function deletePlayer(id: string) {
   const database = await getDB()
   await database.delete('roster', id)
+}
+
+export async function getTeams(): Promise<TeamPreset[]> {
+  const database = await getDB()
+  return database.getAll('teams')
+}
+
+export async function saveTeam(team: TeamPreset) {
+  const database = await getDB()
+  await database.put('teams', team)
+}
+
+export async function deleteTeam(id: string) {
+  const database = await getDB()
+  await database.delete('teams', id)
 }

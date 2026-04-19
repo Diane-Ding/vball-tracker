@@ -67,6 +67,7 @@ export default function Home() {
       <div className="mt-auto pt-6 border-t border-gray-100 flex gap-4 justify-around">
         <Link href="/" className="text-sm font-medium text-green-600">🏐 Home</Link>
         <Link href="/roster" className="text-sm font-medium text-gray-500">👥 Roster</Link>
+        <Link href="/teams" className="text-sm font-medium text-gray-500">🤝 Teams</Link>
       </div>
     </main>
   )

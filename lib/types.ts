@@ -1,6 +1,13 @@
 export type Player = {
   id: string
   name: string
+  position?: string
+}
+
+export type TeamPreset = {
+  id: string
+  name: string
+  players: string[] // 6 player names in rotation order
 }
 
 export type StatType = 'kill' | 'ace' | 'block' | 'attackError' | 'serviceError'
