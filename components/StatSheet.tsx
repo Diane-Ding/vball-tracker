@@ -6,6 +6,7 @@ const OUR_STATS: { type: StatType; label: string }[] = [
   { type: 'kill', label: '💥 Kill' },
   { type: 'ace', label: '🎯 Ace' },
   { type: 'block', label: '🛡️ Block' },
+  { type: 'opponentError', label: '💀 Opp Error' },
 ]
 
 const THEIR_STATS: { type: StatType; label: string }[] = [
@@ -17,10 +18,11 @@ type Props = {
   point: 'us' | 'them'
   lineup: string[]
   server: string
+  opponent: string
   onSave: (stat: RallyStat | null) => void
 }
 
-export default function StatSheet({ point, lineup, server, onSave }: Props) {
+export default function StatSheet({ point, lineup, server, opponent, onSave }: Props) {
   const [statType, setStatType] = useState<StatType | null>(null)
   const [player, setPlayer] = useState<string | null>(null)
 
@@ -32,8 +34,10 @@ export default function StatSheet({ point, lineup, server, onSave }: Props) {
       setPlayer(null)
     } else {
       setStatType(type)
-      // Ace always goes to the server — auto-assign and skip player picker
-      setPlayer(type === 'ace' ? server : null)
+      // Ace auto-assigns to server; opponentError auto-assigns to opponent team
+      if (type === 'ace') setPlayer(server)
+      else if (type === 'opponentError') setPlayer(opponent)
+      else setPlayer(null)
     }
   }
 
@@ -45,7 +49,7 @@ export default function StatSheet({ point, lineup, server, onSave }: Props) {
     }
   }
 
-  const showPlayerPicker = statType !== null && statType !== 'ace'
+  const showPlayerPicker = statType !== null && statType !== 'ace' && statType !== 'opponentError'
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col justify-end">
@@ -75,6 +79,9 @@ export default function StatSheet({ point, lineup, server, onSave }: Props) {
 
         {statType === 'ace' && (
           <p className="text-sm text-green-600 font-medium">🎯 Ace by {server}</p>
+        )}
+        {statType === 'opponentError' && (
+          <p className="text-sm text-orange-500 font-medium">💀 Error by {opponent}</p>
         )}
 
         {showPlayerPicker && (

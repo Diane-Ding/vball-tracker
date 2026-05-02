@@ -10,7 +10,7 @@ export type TeamPreset = {
   players: string[] // 6 player names in rotation order
 }
 
-export type StatType = 'kill' | 'ace' | 'block' | 'attackError' | 'serviceError'
+export type StatType = 'kill' | 'ace' | 'block' | 'attackError' | 'serviceError' | 'opponentError'
 
 export type RallyStat = {
   type: StatType

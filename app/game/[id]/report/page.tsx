@@ -12,6 +12,7 @@ type PlayerStats = {
   attackErrors: number
   serviceErrors: number
   points: number
+  opponentErrors: number
 }
 
 type RotationStats = {
@@ -24,7 +25,7 @@ type RotationStats = {
 function computePlayerStats(match: Match): Record<string, PlayerStats> {
   const stats: Record<string, PlayerStats> = {}
   for (const name of match.roster) {
-    stats[name] = { kills: 0, aces: 0, blocks: 0, attackErrors: 0, serviceErrors: 0, points: 0 }
+    stats[name] = { kills: 0, aces: 0, blocks: 0, attackErrors: 0, serviceErrors: 0, points: 0, opponentErrors: 0 }
   }
   for (const rally of match.rallies) {
     if (!rally.stat) continue
@@ -37,6 +38,10 @@ function computePlayerStats(match: Match): Record<string, PlayerStats> {
     else if (rally.stat.type === 'serviceError') s.serviceErrors++
   }
   return stats
+}
+
+function countOpponentErrors(match: Match): number {
+  return match.rallies.filter((r) => r.stat?.type === 'opponentError').length
 }
 
 function computeRotationStats(match: Match): RotationStats[] {
@@ -71,6 +76,7 @@ export default function ReportPage() {
     const lineH = 22 * scale
     const pStats = computePlayerStats(match)
     const rStats = computeRotationStats(match)
+    const oppErrors = countOpponentErrors(match)
     const players = match.roster.filter((n) => match.startingLineup.includes(n))
     const setsUs = match.sets.filter((s) => s.score[0] > s.score[1]).length
     const setsThem = match.sets.filter((s) => s.score[1] > s.score[0]).length
@@ -78,10 +84,10 @@ export default function ReportPage() {
 
     // First pass: measure total height
     const rows =
-      4 +                      // header block
-      1 + match.sets.length +  // sets
-      1 + 1 + players.length + 1 + // player stats
-      1 + 1 + rStats.length    // rotation stats
+      4 +                                      // header block
+      1 + match.sets.length +                  // sets
+      1 + 1 + players.length + (oppErrors > 0 ? 1 : 0) + 1 + // player stats
+      1 + 1 + rStats.length                    // rotation stats
     const H = (rows + 4) * lineH + margin * 2
 
     const canvas = document.createElement('canvas')
@@ -164,6 +170,10 @@ export default function ReportPage() {
       text(String(s.points),                   c[5], { size: 12, bold: true, color: '#16a34a' })
       y += lineH
     }
+    if (oppErrors > 0) {
+      text(`💀 ${match.opponent} errors: ${oppErrors}`, margin, { size: 10, color: '#f97316' })
+      y += lineH
+    }
     text('K=Kills  A=Aces  B=Blocks  Err=Errors  Pts=K+A+B', margin, { size: 9, color: '#aaa' })
     y += lineH
     rule()
@@ -223,6 +233,7 @@ export default function ReportPage() {
   const allRosterWithStats = match.roster.filter((name) =>
     match.startingLineup.includes(name)
   )
+  const opponentErrors = countOpponentErrors(match)
 
   return (
     <main className="flex flex-col min-h-dvh p-4">
@@ -287,6 +298,11 @@ export default function ReportPage() {
                 })}
               </tbody>
             </table>
+            {opponentErrors > 0 && (
+              <p className="text-xs text-orange-400 mt-2 font-medium">
+                💀 {match.opponent} errors: {opponentErrors}
+              </p>
+            )}
             <p className="text-xs text-gray-400 mt-1">K=Kills A=Aces B=Blocks Err=Errors Pts=K+A+B</p>
           </div>
         </div>

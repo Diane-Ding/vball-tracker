@@ -162,6 +162,7 @@ export default function LiveGamePage() {
           point={pendingStat.point}
           lineup={match.currentLineup}
           server={preRotationServer}
+          opponent={match.opponent}
           onSave={(stat: RallyStat | null) => saveStat(stat)}
         />
         )
